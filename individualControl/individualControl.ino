@@ -15,6 +15,7 @@ int redVals[3] = {0, 155, 255};
 int greenVals[3] = {255, 0, 155};
 int blueVals[3] = {155, 255, 0};
 float brightnesses[3] = {0.5, 0.5, 0.5};
+// initialize the 'directions' that each value will shift; 'true' indicates that the number should increase and 'false' indicates that the number should decrease
 bool directions[3][3] = {{true, true, true}, {true, true, true}, {true, true, true}};
 
 int tempInt = 0;
@@ -33,6 +34,7 @@ void loop() {
  
  if(xVal > 520 && xVal < 1000){ // if the stick is pulled to the right but not clicked
   if(pos != 3){
+    // shift red values
     if(redVals[pos] == 255){
       directions[pos][0] = false;
     }
@@ -45,6 +47,7 @@ void loop() {
       redVals[pos] = redVals[pos] - 1;
     }
 
+    // shift green values
     if(greenVals[pos] == 255){
       directions[pos][1] = false;
     }
@@ -57,10 +60,11 @@ void loop() {
       greenVals[pos] = greenVals[pos] - 1;
     }
 
+    // shift blue values
     if(blueVals[pos] == 255){
       directions[pos][2] = false;
     }
-    if(redVals[pos] == 0){
+    if(blueVals[pos] == 0){
       directions[pos][2] = true;
     }
     if (directions[pos][2]){
@@ -68,6 +72,10 @@ void loop() {
     } else {
       blueVals[pos] = blueVals[pos] - 1;
     }
+    Serial.println(redVals[pos]);
+    Serial.println(greenVals[pos]);
+    Serial.println(blueVals[pos]);
+    Serial.println(" ");
   }
  } 
 
