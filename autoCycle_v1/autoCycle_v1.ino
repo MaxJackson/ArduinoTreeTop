@@ -37,16 +37,21 @@ int tempInt = 0;
 float tempFloat = 0.0;
 
 void updateLEDs(ChainableLED leds, int LEDrgbVals[3][3], float brightness, int cycleIterator){ // update LED values and write them to the strip
+  
   for(ledIndex = 0; ledIndex < 3; ledIndex ++){ // loop through each LED
     for(colorIndex = 0; colorIndex < 3; colorIndex++){ // loop through each RGB color in each LED
+      // Serial.println("updateLEDs");
+      // Serial.println(LEDrgbVals[ledIndex][colorIndex]);
       if(LEDrgbVals[ledIndex][colorIndex] >= 255){ // if the value has reached the maximum 
         LEDrgbVals[ledIndex][colorIndex] = 255; // make sure it doesn't exceed the maximum
         isIncreasing[ledIndex][colorIndex] = false; // tell the value to decrease
       }
+
       if(LEDrgbVals[ledIndex][colorIndex] <= 0){ // if the value has reached the minumum
        LEDrgbVals[ledIndex][colorIndex] = 0; // make sure it stays above the minimum
        isIncreasing[ledIndex][colorIndex] = true; // tell the value to increase
       }
+
       if (isIncreasing[ledIndex][colorIndex]){ // increase the value if the direction for the value is set to true
        LEDrgbVals[ledIndex][colorIndex] = LEDrgbVals[ledIndex][colorIndex] + cycleIterator;
       } else { // decrease the value if the direction for the value is set to false
@@ -88,43 +93,56 @@ char getYState(int yPin){
   return yState;
 }
 
+
+
+
 void setup() {
   Serial.begin(9600); // initialize serial output for debugging
   leds.init(); // initialize the led strip
 }
 
 
-
-
 void loop() {
+
   xState = getXState(xPin); // get the x state
   yState = getYState(yPin); // get the y state
-  // Serial.println(xState); // print the states to console for debugging
-  // Serial.println(yState);
-  // Serial.println('\n');
- 
-  if(xState == 'r'){ // if the stick is pulled to the right
-    if(cycleIterator < 10){ // if the cycle iterator is less than its maximum value of 10,
-      cycleIterator = cycleIterator + 1; // ...increase the cycle iterator by one, speeding up the cycle
-    }
-  }
-  if(xState == 'l'){ // if the stick is pulled to hte left
-    if(cycleIterator > 0){ // if the cycle iterator is more than its minimum value of 0
-     cycleIterator = cycleIterator - 1; // decrease the cycle iterator by one, slowing down the cycle
-    }
-  }
- 
 
- if(yState == 'u'){ // if the stick is pulled up
-  if(brightness < 0.99){ // if the brightness is less than the maximum
-    brightness = brightness + 0.01; // increase the brightness
+  switch (xState) {
+    case 'r':
+      Serial.println(xState);
+      Serial.println(cycleIterator);
+      // if cycleIterator is < 10, return cycleIterator + 1, otherwise return cycleIterator
+      cycleIterator < 10 ? cycleIterator++ : cycleIterator; 
+      break;
+    case 'l':
+      Serial.println(xState);
+      Serial.println(cycleIterator);
+      // if cycleIterator is > 0, return cycleIterator - 1, otherwise return cycleIterator
+      cycleIterator > 0 ? cycleIterator-- : cycleIterator; 
+      break;
+    default: 
+      // if nothing else matches, do the default
+      // default is optional
+    break;
   }
- }
 
- if(yState == 'd'){ // if the stick is pulled down
-    if(brightness > 0.01){ // if the brightness is more than the minimum
-      brightness = brightness - 0.01; // decrease the brightness
-    }
+  switch (yState) {
+    case 'u':
+      Serial.println(yState);
+      Serial.println(brightness);
+      // if brightness is < 0.99, return brightness + 0.01, otherwise return brightness
+      brightness < 0.99 ? brightness=brightness+0.01 : brightness; 
+      break;
+    case 'd':
+      Serial.println(yState);
+      Serial.println(brightness);
+      // if brightness is > 0.01, return brightness - 0.01, otherwise return brightness
+      brightness > 0.01 ? brightness=brightness-0.01 : brightness; 
+      break;
+    default: 
+      // if nothing else matches, do the default
+      // default is optional
+    break;
   }
 
    updateLEDs(leds, LEDrgbVals, brightness, cycleIterator); // update the LEDs with every loop
