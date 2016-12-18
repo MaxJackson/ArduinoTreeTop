@@ -18,6 +18,9 @@ float brightnesses[3] = {0.5, 0.5, 0.5};
 // initialize the 'directions' that each value will shift; 'true' indicates that the number should increase and 'false' indicates that the number should decrease
 bool directions[3][3] = {{true, true, true}, {true, true, true}, {true, true, true}};
 
+//mode
+
+
 int tempInt = 0;
 float tempFloat = 0.0;
 
@@ -29,8 +32,29 @@ void setup() {
 
 
 void loop() {
+
   xVal = analogRead(xPin); // read from the x-axis pin 
   yVal = analogRead(yPin); // read from the y-axis pin
+
+switch (pos) {
+  case 1:
+    //manual color & blink
+    updateAllLeds(xVal);
+    //x changes color
+    //y changes blink speed
+    break;
+  case 2:
+    //auto color only
+    autoColor(xVal);
+    //y changes blink speed
+    break;
+  default: 
+    // if nothing else matches, do the default
+    // default is optional
+  break;
+}
+
+
  
  if(xVal > 520 && xVal < 1000){ // if the stick is pulled to the right but not clicked
   if(pos != 3){
@@ -138,7 +162,7 @@ void loop() {
  }
 
  if(xVal > 1000){ // if the button is clicked
-  pos = (pos + 1) % 4;
+  pos = (pos + 1) % 3;
   Serial.println(pos);
   delay(100); // when clicked the button sets xVal above 1000 for several cycles; this delay ensures that a single button press doesn't cause the position to shift more than once
  }
@@ -147,6 +171,35 @@ void loop() {
 
   // Write to LEDs
   for(int i = 0; i < 3; i++){
-    leds.setColorRGB(i, (int)redVals[i]*brightnesses[i], (int)greenVals[i]*brightnesses[i], (int)blueVals[i]*brightnesses[i]);
+//    leds.setColorRGB(i, (int)redVals[i]*brightnesses[i], (int)greenVals[i]*brightnesses[i], (int)blueVals[i]*brightnesses[i]);
   }
+}
+
+int c = 0;
+
+void updateAllLeds(int xVal) {
+  Serial.println("updateAllLeds");
+  Serial.println(xVal);
+  if(xVal == 255){
+    // directions[pos][0] = false;
+    c = c+5;
+    leds.setColorRGB(0, c, c, c);
+   leds.setColorRGB(1, c, c, c);
+   leds.setColorRGB(2, c, c, c);
+  };
+  if(xVal == 0){
+    // directions[pos][0] = true;
+    c = c-5;
+    leds.setColorRGB(0, c, c, c);
+   leds.setColorRGB(1, c, c, c);
+   leds.setColorRGB(2, c, c, c);
+  };
+  // for(int i = 0; i < 3; i++){
+  
+  // }
+}
+
+void autoColor(int xVal) {
+  Serial.println("autoColor");
+  Serial.println(xVal);
 }
