@@ -33,6 +33,10 @@ float brightness = 0.5;
 bool isIncreasing[3][3] = {{true, true, true}, {true, true, true}, {true, true, true}};
 int cycleIterator = 1;
 
+//app modes
+int currentMode = 0; //current modes
+int totalsModes = 3; //total number of modes
+
 int tempInt = 0;
 float tempFloat = 0.0;
 
@@ -69,6 +73,7 @@ char getXState(int xPin){ // get the state of the x axis
   xVal = analogRead(xPin); // read from the x-axis pin 
   if(xVal > 1000) {
     xState = 'c'; // set the state to 'click'
+    currentMode = cycleMode(currentMode);
   } else if(xVal > 520 && xVal < 1000){
     xState = 'r'; // set the state to 'right'
   } else if(xVal < 500) {
@@ -93,7 +98,12 @@ char getYState(int yPin){
   return yState;
 }
 
-
+char cycleMode(int mode){ // get the state of the x axis
+  mode = (mode + 1) % 3;
+  Serial.println(mode);
+  delay(300); // when clicked the button sets xVal above 1000 for several cycles; this delay ensures that a single button press doesn't cause the position to shift more than once
+  return mode;
+}
 
 
 void setup() {
@@ -106,6 +116,21 @@ void loop() {
 
   xState = getXState(xPin); // get the x state
   yState = getYState(yPin); // get the y state
+
+  switch (currentMode) {
+    case 0:
+      Serial.println("Mode 0");
+      break;
+    case 1:
+      Serial.println("Mode 1");
+      break;
+    case 2:
+      Serial.println("Mode 2");
+      break;
+    break;
+  }
+
+
 
   switch (xState) {
     case 'r':
