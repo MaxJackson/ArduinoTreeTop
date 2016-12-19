@@ -27,8 +27,6 @@ ChainableLED leds(7, 8, NUM_LEDS);
 // Joystick Variables
 const int xPin = 0; // the x-axis input pin
 const int yPin = 1; // the y-axis input pin
-int xVal = 0; // the x-axis analog value (250 min, 510 resting, 770 max)
-int yVal = 0; // the y-axis analog value (250 min, 510 resting, 770 max)
 
 // LED Variables
 int ledIndex = 0; // position
@@ -37,6 +35,7 @@ int LEDrgbVals[3][3] = {{0, 255, 155}, {155, 0, 255}, {255, 155, 0}}; // RGB val
 float brightness = 0.5;
 // initialize the 'directions' that each value will shift; 'true' indicates that the number should increase and 'false' indicates that the number should decrease
 bool isIncreasing[3][3] = {{true, true, true}, {true, true, true}, {true, true, true}};
+const int cycleIteratorMax = 10;
 int cycleIterator = 1;
 
 //app modes
@@ -50,8 +49,6 @@ void updateLEDs(ChainableLED leds, int LEDrgbVals[3][3], float brightness, int c
 
   for (ledIndex = 0; ledIndex < 3; ledIndex ++) { // loop through each LED
     for (colorIndex = 0; colorIndex < 3; colorIndex++) { // loop through each RGB color in each LED
-      // Serial.println("updateLEDs");
-      // Serial.println(LEDrgbVals[ledIndex][colorIndex]);
       if (LEDrgbVals[ledIndex][colorIndex] >= 255) { // if the value has reached the maximum
         LEDrgbVals[ledIndex][colorIndex] = 255; // make sure it doesn't exceed the maximum
         isIncreasing[ledIndex][colorIndex] = false; // tell the value to decrease
@@ -77,7 +74,7 @@ void updateLEDs(ChainableLED leds, int LEDrgbVals[3][3], float brightness, int c
 
 char getXState(int xPin) { // get the state of the x axis
   char xState = 'i';
-  xVal = analogRead(xPin); // read from the x-axis pin
+  int xVal = analogRead(xPin); // read from the x-axis pin
   if (xVal > 1000) {
     xState = 'c'; // set the state to 'click'
     currentMode = cycleMode(currentMode);
@@ -93,8 +90,7 @@ char getXState(int xPin) { // get the state of the x axis
 
 char getYState(int yPin) {
   char yState = 'i';
-  yVal = analogRead(yPin); // read from the x-axis pin
-  //Serial.println(yVal);
+  int yVal = analogRead(yPin); // read from the y-axis pin
   if (yVal > 520) {
     yState = 'u'; // set the state to 'up'
   } else if (yVal < 500) {
@@ -108,7 +104,7 @@ char getYState(int yPin) {
 
 char cycleMode(int mode) { // get the state of the x axis
   mode = (mode + 1) % 3;
-  Serial.println(mode);
+  //Serial.println(mode);
   delay(300); // when clicked the button sets xVal above 1000 for several cycles; this delay ensures that a single button press doesn't cause the position to shift more than once
   return mode;
 }
@@ -141,13 +137,13 @@ void loop() {
   }
 
 
-
+  // Check on the joystick x axis 
   switch (joystick_1->xState) {
     case 'r':
       Serial.println(joystick_1->xState);
       Serial.println(cycleIterator);
-      // if cycleIterator is < 10, return cycleIterator + 1, otherwise return cycleIterator
-      cycleIterator < 10 ? cycleIterator++ : cycleIterator;
+      // if cycleIterator is < cycleIteratorMax, return cycleIterator + 1, otherwise return cycleIterator
+      cycleIterator < cycleIteratorMax ? cycleIterator++ : cycleIterator;
       break;
     case 'l':
       Serial.println(joystick_1->xState);
@@ -161,6 +157,7 @@ void loop() {
       break;
   }
 
+  // Check on the joystick y axis
   switch (joystick_1->yState) {
     case 'u':
       Serial.println(joystick_1->yState);
