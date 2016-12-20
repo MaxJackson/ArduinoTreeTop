@@ -33,21 +33,23 @@ const int yPin = 1; // the y-axis input pin
 // LED Variables
 int ledIndex = 0; // position
 int colorIndex = 0;
-int LEDrgbVals[4][3] = {{0, 255, 155}, {155, 0, 255}, {255, 155, 0}, {255, 255, 255}}; // RGB values, indexed as [ledIndex][colorIndex]
-int cycleInitVals[4][3] = {{0, 255, 155}, {155, 0, 255}, {255, 155, 0}, {0, 45, 85}};
-int rgbinaryInitVals[4][3] = {{255, 0, 0}, {255, 0, 0}, {255, 0, 0}, {255, 0, 0}};
+int LEDrgbVals[3][3] = {{0, 255, 155}, {155, 0, 255}, {255, 155, 0}}; // RGB values, indexed as [ledIndex][colorIndex]
+int cycleInitVals[3][3] = {{0, 255, 155}, {155, 0, 255}, {255, 155, 0}};
+int rgbinaryInitVals[3][3] = {{255, 0, 0}, {255, 0, 0}, {255, 0, 0}};
 float brightness = 0.5;
 // initialize the 'directions' that each value will shift; 'true' indicates that the number should increase and 'false' indicates that the number should decrease
 
 // Cycle Variales
-bool isIncreasing[4][3] = {{true, true, true}, {true, true, true}, {true, true, true}, {true, true, true}};
+bool isIncreasing[3][3] = {{true, true, true}, {true, true, true}, {true, true, true}};
 const int cycleIteratorMax = 10;
 int cycleIterator = 1;
 
 // RG Binary Variables
 int binaryCounter = 0;
-int remainder = 0;
-int binaryPower = 0;
+float remainder = 0.0;
+float binaryPower = 0;
+int iterateRGBTimer = 500;
+const int iterateRGBTimerMax = 1000;
 
 //app modes
 int currentMode = 0; //current modes
@@ -59,32 +61,44 @@ unsigned long TimerA;
 int tempInt = 0;
 float tempFloat = 0.0;
 
-void writeLEDs(ChainableLED leds, int LEDrgbVals[4][3], float brightness){
+void writeLEDs(ChainableLED leds, int LEDrgbVals[3][3], float brightness){ // write the RGB values to the LEDs themselves
   for (ledIndex = 0; ledIndex < 3; ledIndex++) { // write values to LEDs
-    leds.setColorRGB(ledIndex, (int)LEDrgbVals[0][ledIndex]*brightness, (int)LEDrgbVals[1][ledIndex]*brightness, (int)LEDrgbVals[2][ledIndex]*brightness);
+    leds.setColorRGB(ledIndex, (int)LEDrgbVals[ledIndex][0]*brightness, (int)LEDrgbVals[ledIndex][1]*brightness, (int)LEDrgbVals[ledIndex][2]*brightness);
   }
 }
 
-void initializeLEDValsForCycle(int LEDrgbVals[4][3]){
-  for(ledIndex = 0; ledIndex < 4; ledIndex++){
+void initializeLEDValsForCycle(int LEDrgbVals[3][3]){ // initialize the LED values for the color cycle
+  for(ledIndex = 0; ledIndex < NUM_LEDS; ledIndex++){
     for(colorIndex = 0; colorIndex < 3; colorIndex++){
       LEDrgbVals[ledIndex][colorIndex] = cycleInitVals[ledIndex][colorIndex];
     }
   }
 }
 
-void initializeLEDValsForRGBinary(int LEDrgbVals[4][3]){
-  for(ledIndex = 0; ledIndex < 4; ledIndex++){
+void initializeLEDValsForRGBinary(int LEDrgbVals[3][3]){
+  for(ledIndex = 0; ledIndex < NUM_LEDS; ledIndex++){
     for(colorIndex = 0; colorIndex < 3; colorIndex++){
       LEDrgbVals[ledIndex][colorIndex] = rgbinaryInitVals[ledIndex][colorIndex];
     }
   }
 }
 
+void printRGBsToConsole(int LEDrgbVals[3][3]){ // print all the RGB values to the console for debugging
+    for (ledIndex = 0; ledIndex < NUM_LEDS; ledIndex ++) { // loop through each LED
+      Serial.print(ledIndex);
+      Serial.print(": ");
+      for (colorIndex = 0; colorIndex < 3; colorIndex++) { // loop through each RGB color in each LED
+        Serial.print(LEDrgbVals[ledIndex][colorIndex]);
+        Serial.print(" ");
+      }
+      Serial.println(" ");
+    }
+    Serial.println(" ");
+}
 
 
 void cycleLEDVals(int LEDrgbVals[4][3], int cycleIterator, bool isIncreasing[4][3]) { // update LED values and write them to the strip
-  for (ledIndex = 0; ledIndex < 4; ledIndex ++) { // loop through each LED
+  for (ledIndex = 0; ledIndex < NUM_LEDS; ledIndex ++) { // loop through each LED
     for (colorIndex = 0; colorIndex < 3; colorIndex++) { // loop through each RGB color in each LED
       if (LEDrgbVals[ledIndex][colorIndex] >= 255) { // if the value has reached the maximum
         LEDrgbVals[ledIndex][colorIndex] = 255; // make sure it doesn't exceed the maximum
@@ -108,14 +122,18 @@ void cycleLEDVals(int LEDrgbVals[4][3], int cycleIterator, bool isIncreasing[4][
 
 void iterateRGBinary(int LEDrgbVals[4][3], int binaryCounter){
   Serial.println(binaryCounter);
-  remainder = binaryCounter;
-  for (ledIndex = 0; ledIndex < 4; ledIndex++) {
-    binaryPower = pow(2, (3-ledIndex));
+  remainder = (float)binaryCounter;
+  for (ledIndex = 0; ledIndex < NUM_LEDS; ledIndex++) {
+    binaryPower = pow((float)2, (float)(3-ledIndex));
     if(remainder >= binaryPower){
+      //Serial.print(remainder);
+      //Serial.print(" >= ");
+      //Serial.println(binaryPower);
       LEDrgbVals[ledIndex][0] = 0;
       LEDrgbVals[ledIndex][1] = 255;
       LEDrgbVals[ledIndex][2] = 0;
-      remainder = remainder % binaryPower;
+      remainder = fmod(remainder, binaryPower);
+      //Serial.println(remainder);
       Serial.print(1);
     } else { 
       LEDrgbVals[ledIndex][0] = 255;
@@ -125,11 +143,13 @@ void iterateRGBinary(int LEDrgbVals[4][3], int binaryCounter){
     }
   }
   Serial.println("");
+  //printRGBsToConsole(LEDrgbVals);
 }
 
 char getXState(int xPin) { // get the state of the x axis
   char xState = 'i';
   int xVal = analogRead(xPin); // read from the x-axis pin
+  //Serial.println(xVal);
   if (xVal > 1000) {
     xState = 'c'; // set the state to 'click'
     currentMode = cycleMode(currentMode);
@@ -146,6 +166,7 @@ char getXState(int xPin) { // get the state of the x axis
 char getYState(int yPin) {
   char yState = 'i';
   int yVal = analogRead(yPin); // read from the y-axis pin
+  //Serial.println(yVal);
   if (yVal > 520) {
     yState = 'u'; // set the state to 'up'
   } else if (yVal < 500) {
@@ -197,7 +218,7 @@ void loop() {
         initializedForRGBinary = true;
         TimerA = millis();
       }
-      if (millis() - TimerA >= 1000){
+      if (millis() - TimerA >= iterateRGBTimer){
         iterateRGBinary(LEDrgbVals, binaryCounter);
         binaryCounter = (binaryCounter + 1) % 16;
         TimerA = millis();
@@ -218,15 +239,17 @@ void loop() {
   switch (joystick_1->xState) {
     case 'r':
       Serial.println(joystick_1->xState);
-      Serial.println(cycleIterator);
+      Serial.println(iterateRGBTimer);
       // if cycleIterator is < cycleIteratorMax, return cycleIterator + 1, otherwise return cycleIterator
       cycleIterator < cycleIteratorMax ? cycleIterator++ : cycleIterator;
+      iterateRGBTimer < iterateRGBTimerMax ? iterateRGBTimer++ : iterateRGBTimer;
       break;
     case 'l':
       Serial.println(joystick_1->xState);
-      Serial.println(cycleIterator);
+      Serial.println(iterateRGBTimer);
       // if cycleIterator is > 0, return cycleIterator - 1, otherwise return cycleIterator
       cycleIterator > 0 ? cycleIterator-- : cycleIterator;
+      iterateRGBTimer > 0 ? iterateRGBTimer = iterateRGBTimer - 10 : iterateRGBTimer;
       break;
     default:
       // if nothing else matches, do the default
@@ -253,6 +276,7 @@ void loop() {
       // default is optional
       break;
   }
+  //printRGBsToConsole(LEDrgbVals);
   writeLEDs(leds, LEDrgbVals, brightness);
   
 }
